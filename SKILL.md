@@ -168,7 +168,6 @@ When showing refs to the user, use the short format. When a command needs a ref,
 - Use `--group-by` for reports, `--json` for structured data on specific items
 - The `log` command shows cross-extension activity: `gitsocial log --limit 10`
 - For full CLI reference with all flags, read `references/cli-reference.md` or run `gitsocial <command> --help`
-- For example scenarios (what you can ask), read `references/scenarios.md`
 - For autonomous agent patterns (scheduled tasks, batch operations, agent-to-agent), read `references/agentic-workflows.md`
 - Fork management: `gitsocial fork add <url>` to discover PRs from forks
 - Settings: `gitsocial settings list` to see user preferences
