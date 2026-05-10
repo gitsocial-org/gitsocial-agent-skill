@@ -50,7 +50,7 @@ gitsocial search --type pr --json | python3 -c "import json, sys; ..."
 
 ## Answering Questions — Search First
 
-When the user asks about project state, history, or content, use `gitsocial search` as your **first choice** — it queries across all extensions (issues, PRs, posts, releases) in one call.
+When the user asks about project state, history, or content, use `gitsocial search` as your **first choice** — it queries across all extensions (issues, PRs, posts, releases, memos) in one call.
 
 **For reports and summaries, use `--group-by`:**
 ```bash
@@ -105,6 +105,7 @@ All commands accept:
 | `pm` | Issues, milestones, sprints | `pm issue create/list/show/close`, `pm milestone`, `pm sprint` |
 | `review` | Pull requests, code review | `review pr create/list/show/merge`, `review feedback` |
 | `release` | Versions, artifacts, SBOM | `release create/list/show/edit` |
+| `memo` | Tiered project knowledge (session → personal → project → inherited) | `memo list/create/promote/show` |
 
 ## Write Operations (search and show can't do these)
 
@@ -134,6 +135,12 @@ gitsocial release create "v1.2.0 — Title" --tag v1.2.0 --version 1.2.0
 # Lists
 gitsocial social list create my-list --name "My Projects"
 gitsocial social list add my-list https://github.com/user/repo
+
+# Memos
+gitsocial memo create "Cache writes must use ExecLocked" --labels "kind/policy,topic/cache"
+gitsocial memo promote #commit:<hash> --to project
+gitsocial memo edit #commit:<hash> --body "updated text"
+gitsocial memo retract #commit:<hash>
 ```
 
 ### Other operations
@@ -146,6 +153,83 @@ gitsocial notifications read-all                      # mark all read
 gitsocial social timeline --list my-list              # chronological feed
 gitsocial import all https://github.com/org/repo      # import from GitHub
 ```
+
+## Memo Workflow
+
+Memos are project knowledge stored as commits across four tiers:
+
+- **session** — scratch space for the current task. GC'd after `--older-than 30d`.
+- **personal** — your durable cross-project preferences (private bare repo at `~/.config/gitsocial/personal`, shared with core settings sync).
+- **project** — durable, shared with the team via `gitmsg/memo` on the workspace.
+- **inherited** — pulled from binding-policy sources via `memo inherit add <url>` (read-only).
+
+`memo create` defaults to session. `memo promote --to <tier>` copies a memo upward (session → personal/project, personal → project). Never auto-promote without asking the user.
+
+### Pre-task: load relevant durable knowledge
+
+At the start of a non-trivial task, load durable memos so prior decisions inform your approach. Query narrowly — don't dump everything:
+
+```bash
+# By topic when the task touches a known area
+gitsocial memo list --labels "topic/cache" --json
+gitsocial memo list --labels "kind/policy" --json
+
+# Just the durable tiers (skip session noise)
+gitsocial memo list --tier project --json
+gitsocial memo list --tier inherited --json
+
+# Full-text keyword search within a tier (memo list filters by label/tier only, not content)
+gitsocial search "ExecLocked" --type memo --tier project --json
+```
+
+`memo list` defaults to session + personal + project + inherited (external repos hidden). Use `--include-sessions all` only when explicitly reviewing scratch.
+
+### Capture: write to session as you learn
+
+Capture anything **durable and non-obvious**: project constraints, gotchas, decisions with rationale, conventions a future agent or developer would rediscover the hard way. Default tier is session — these are tentative until promoted.
+
+```bash
+gitsocial memo create "<one-line policy>" --body "<why>" --labels "kind/policy,topic/<area>,priority/<low|high|critical>"
+```
+
+**Do capture:**
+- Hidden constraints ("cache writes MUST use `ExecLocked` — concurrent writers without it caused data loss in incident X").
+- Conventions that aren't obvious from the code (naming, layering, branch strategy).
+- Decisions with rationale, including roads not taken.
+
+**Don't capture:**
+- One-off fixes, transient state, "I just ran X".
+- Anything already in CLAUDE.md, README, or commit messages.
+- Speculation — only commit what you have evidence for.
+
+**Label vocabulary** (use existing labels before inventing):
+- `kind/policy`, `kind/decision`, `kind/gotcha`, `kind/convention`
+- `priority/low`, `priority/high`, `priority/critical`
+- `topic/<area>` (e.g., `topic/cache`, `topic/auth`)
+- `expires/YYYY-MM-DD` or `expires/<RFC3339>` — validated; malformed dates are rejected at create time.
+
+### Promote: ask, then move durable memos upward
+
+When a session memo proves valuable (referenced again next session, validated in code review, user confirms), suggest promotion. Don't promote silently.
+
+```bash
+# Suggest to user, then on confirm:
+gitsocial memo promote #commit:<hash> --to project    # for team-shared knowledge
+gitsocial memo promote #commit:<hash> --to personal   # for cross-project preferences
+```
+
+Promotion is plain copy with no back-reference: the source session is unchanged, the target tier gets a fresh commit. Project promotion requires `memo project init` once per repo; personal requires `memo personal init`.
+
+### Review: surface session memos for the user
+
+Before session GC, give the user a chance to curate:
+
+```bash
+gitsocial memo list --include-sessions all --json
+gitsocial memo list --tier session --include-sessions all --json
+```
+
+`memo session list` shows active sessions with ages; `memo session gc --older-than 30d` cleans up.
 
 ## Ref Format
 

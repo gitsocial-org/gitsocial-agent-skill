@@ -66,7 +66,7 @@ gitsocial search [query]
   -n, --limit       Max results (default: 20)
   -a, --author      Filter by author email
   -r, --repo        Filter by repository URL
-  -t, --type        Filter by type (post|comment|repost|quote|pr|issue|milestone|sprint|release|feedback)
+  -t, --type        Filter by type (post|comment|repost|quote|pr|issue|milestone|sprint|release|feedback|memo)
   --hash            Filter by commit hash prefix
   --after           After date (YYYY-MM-DD)
   --before          Before date (YYYY-MM-DD)
@@ -82,6 +82,7 @@ gitsocial search [query]
   --prerelease      Filter pre-releases only (implies --type release)
   --tag             Filter by release tag (implies --type release)
   --base            Filter by PR base branch (implies --type pr)
+  --tier            Memo tier scope: session|personal|project|inherited|external (requires --type memo)
   --group-by        Group results by field (state, author, type, extension, repo, label, assignee, reviewer, milestone, base)
   --top             Max items per group (default: unlimited)
   --count-only      Show only group counts, no items
@@ -400,6 +401,80 @@ gitsocial release artifacts export <version> [filename...]
 ```
 gitsocial release sbom <ref>
   --raw             Dump raw SBOM JSON
+```
+
+---
+
+## Memo Extension
+
+Tiered project knowledge. Tiers: `session` (scratch, GC'd) → `personal` (private bare repo) → `project` (workspace, shared) → `inherited` (read-only, from binding sources). External tier holds memos from incidentally-followed repos (hidden by default).
+
+### memo status / config
+
+```
+gitsocial memo status
+gitsocial memo config get|set|list
+```
+
+### memo create / edit / retract / promote / show
+
+```
+gitsocial memo create <subject>
+  --body            Memo body
+  --labels          Comma-separated labels (kind/*, priority/*, topic/*, expires/<date>)
+  --scope           Tier: session (default), personal, project
+
+gitsocial memo edit <ref>
+  --subject         New subject
+  --body            New body
+  --labels          New labels (comma-separated)
+
+gitsocial memo retract <ref>
+
+gitsocial memo promote <ref>
+  --to              Target tier: project | personal (must be higher than source)
+
+gitsocial memo show <ref>
+```
+
+### memo list
+
+```
+gitsocial memo list
+  --tier                Restrict to one tier (session | personal | project | inherited | external)
+  --labels              Filter by labels (AND semantics, comma-separated)
+  --include-sessions    Widen session visibility ("all" or a specific id)
+  --include-external    Include memos from incidentally-followed repos
+  --include-expired     Include expired memos
+  --expired             Show only expired memos
+  --limit               Max results
+```
+
+Default scope: session + personal + project + inherited (external hidden).
+
+### memo project / personal / session
+
+```
+gitsocial memo project init                        # idempotent
+
+gitsocial memo personal init                       # creates ~/.config/gitsocial/personal (shared with core settings)
+gitsocial memo personal push                       # push personal memos to configured remote
+gitsocial memo personal fetch                      # fetch personal memos from configured remote
+
+gitsocial memo session init [id]                   # create or resume; prints resolved id
+gitsocial memo session list                        # active sessions with ages
+gitsocial memo session push <id>
+gitsocial memo session fetch <id>
+gitsocial memo session gc [id]
+  --older-than          Delete sessions inactive past duration (e.g. 30d, 7d, 24h)
+```
+
+### memo inherit
+
+```
+gitsocial memo inherit add <url>
+gitsocial memo inherit list
+gitsocial memo inherit remove <url>
 ```
 
 ---
