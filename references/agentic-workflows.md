@@ -146,6 +146,36 @@ Check readiness and create release:
    gitsocial social post "Released v2.0! Highlights: ..."
 ```
 
+### PR preflight: gate autonomous merge
+Read-only checks before autonomous merge. Halt on any red. Never disable a gate.
+
+```
+1. gitsocial review pr show <ref> --json
+   → state == "open", draft == false, no pending change requests;
+     depends_on empty or every entry merged
+2. If author isn't the workspace owner: gitsocial id <author-email> --json
+   → "verified": true on at least one binding; otherwise halt
+3. For each closes ref: gitsocial show <issue-hash> --json
+   → issue exists and is open
+4. Project-specific consistency checks (see below)
+```
+
+On failure: comment summarizing failing gates, stop. Don't retry.
+
+### Consistency checks: surface drift
+Triggered ad-hoc. Report findings; don't fix without asking.
+
+```
+1. Orphan closures: gitsocial search "<issue-hash>" --json for each closed issue
+   → no result = closure without a referencing commit
+2. Reopen candidates: pm issue list --state open --json ∩ --state closed --json
+   → open issues whose every BlockedBy is now in the closed set
+3. Expired memos: memo list --json
+   → scan labels for expires/YYYY-MM-DD past today
+4. PR drift: review pr list --state open --json
+   → check head_advanced / head_deleted / base_advanced / base_deleted flags
+```
+
 ### Notification agent: act on mentions
 Poll for mentions and respond:
 

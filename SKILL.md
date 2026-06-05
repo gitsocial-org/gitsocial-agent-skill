@@ -48,6 +48,18 @@ gitsocial search --type pr --json | python3 -c "import json, sys; ..."
 3. **Working directory**: Always run commands from the user's git repository root. Use `--workdir` flag if needed.
 4. **User identity**: For "my issues" / "my PRs" queries, get the user's email with `git config user.email` and use it with `--author` or `--assignee`.
 
+## Pre-task Prime
+
+For non-trivial tasks, load context first:
+
+```bash
+gitsocial notifications --unread --limit 10 --json
+gitsocial pm issue list --state open --assignee <user-email> --json
+gitsocial memo list --tier project --tier inherited --labels "kind/policy,kind/convention,kind/routing" --json
+```
+
+Surfaces pending mentions, assigned open work, durable policies and routing hints. Skip for trivial reads.
+
 ## Answering Questions — Search First
 
 When the user asks about project state, history, or content, use `gitsocial search` as your **first choice** — it queries across all extensions (issues, PRs, posts, releases, memos) in one call.
@@ -77,6 +89,15 @@ gitsocial search --type pr --state open --json
 gitsocial search --type issue --state open --labels bug --assignee dev@example.com --json
 gitsocial search --draft --json
 ```
+
+**For unblocked ("ready") work:** an issue is ready when it's open and every ref in its `BlockedBy` array is closed. The array is symmetric — trust it; don't run `pm issue show` per item.
+
+```bash
+gitsocial pm issue list --state open --json
+gitsocial pm issue list --state closed --json
+```
+
+Keep open issues whose every `BlockedBy.Hash` appears in the closed set.
 
 **Filters:** `--type`, `--author`, `--repo`, `--after`/`--before`, `--scope`, `--sort`, `--state`, `--labels`, `--assignee`, `--reviewer`, `--milestone`, `--sprint`, `--draft`, `--prerelease`, `--tag`, `--base`. Extension-specific filters auto-imply their type.
 
@@ -203,10 +224,23 @@ gitsocial memo create "<one-line policy>" --body "<why>" --labels "kind/policy,t
 - Speculation — only commit what you have evidence for.
 
 **Label vocabulary** (use existing labels before inventing):
-- `kind/policy`, `kind/decision`, `kind/gotcha`, `kind/convention`
+- `kind/policy`, `kind/decision`, `kind/gotcha`, `kind/convention`, `kind/routing`
 - `priority/low`, `priority/high`, `priority/critical`
-- `topic/<area>` (e.g., `topic/cache`, `topic/auth`)
+- `topic/<area>` (e.g., `topic/cache`, `topic/auth`); per-issue scope as `topic/issue-<hash>`
 - `expires/YYYY-MM-DD` or `expires/<RFC3339>` — validated; malformed dates are rejected at create time.
+- For `kind/routing` memos: `agent/<type>`, `model/<name>`, `reasoning/<level>`, `mode/<delegated|local|staged>`, `parallel-group/<id>`.
+
+### Routing memos: execution hints
+
+`kind/routing` memos carry per-task or per-area execution settings (model, reasoning effort, agent type, parallel group, mode) without polluting issue labels.
+
+```bash
+gitsocial memo create "Cache work runs delegated at high on opus" \
+  --tier project \
+  --labels "kind/routing,topic/cache,model/opus,reasoning/high,mode/delegated"
+```
+
+Scope via `topic/<area>` (class) or `topic/issue-<hash>` (per-issue). At task start, prime returns these — match the `topic/*` against your scope; project wins over personal over session if multiple match.
 
 ### Promote: ask, then move durable memos upward
 
