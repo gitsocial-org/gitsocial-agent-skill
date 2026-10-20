@@ -53,7 +53,7 @@ gitsocial search --type pr --json | python3 -c "import json, sys; ..."
 For non-trivial tasks, load context first:
 
 ```bash
-gitsocial notifications --unread --limit 10 --json
+gitsocial notifications --limit 10 --json
 gitsocial pm issue list --state open --assignee <user-email> --json
 gitsocial memo list --tier project --tier inherited --labels "kind/policy,kind/convention,kind/routing" --json
 ```
