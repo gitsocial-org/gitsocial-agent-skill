@@ -33,7 +33,7 @@ Use `--group-by` for reports and summaries — it returns compact grouped output
 
 **Correct pattern:**
 ```bash
-gitsocial search --type pr --after 2025-03-23 --group-by state --json
+gitsocial search --type pr --after 2026-10-01 --group-by state --json
 ```
 
 **Wrong pattern (NEVER do this):**
@@ -66,11 +66,11 @@ When the user asks about project state, history, or content, use `gitsocial sear
 
 **For reports and summaries, use `--group-by`:**
 ```bash
-gitsocial search --type pr --after 2025-03-23 --group-by state --limit 200 --json
-gitsocial search --type pr --after 2025-03-23 --group-by author --top 5 --limit 200 --json
+gitsocial search --type pr --after 2026-10-01 --group-by state --limit 200 --json
+gitsocial search --type pr --after 2026-10-01 --group-by author --top 5 --limit 200 --json
 gitsocial search --type issue --state open --group-by label --count-only --limit 200 --json
 gitsocial search --type issue --state open --group-by assignee --limit 200 --json
-gitsocial search --after 2025-03-23 --group-by type --count-only --limit 200 --json
+gitsocial search --after 2026-10-01 --group-by type --count-only --limit 200 --json
 ```
 
 `--group-by` returns compact grouped output with counts. Use `--top N` to limit items per group. Use `--count-only` for just counts. This keeps output small enough to read and present directly. Use `--limit 200` (or higher) with `--group-by` to capture all items — the default limit of 20 may miss results for reports.
@@ -78,8 +78,8 @@ gitsocial search --after 2025-03-23 --group-by type --count-only --limit 200 --j
 **For multi-dimensional reports**, run 2-3 grouped searches:
 ```bash
 # PR report: by state, then by author
-gitsocial search --type pr --after 2025-03-23 --group-by state --top 5 --limit 200 --json
-gitsocial search --type pr --after 2025-03-23 --group-by author --limit 200 --json
+gitsocial search --type pr --after 2026-10-01 --group-by state --top 5 --limit 200 --json
+gitsocial search --type pr --after 2026-10-01 --group-by author --limit 200 --json
 ```
 
 **For finding specific items:**

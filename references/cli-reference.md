@@ -231,6 +231,13 @@ gitsocial pm issue create <title>
   --labels          Comma-separated labels
   --assignees       Comma-separated assignee emails
 
+gitsocial pm issue edit <id>
+  -l, --labels      Comma-separated labels, replacing any set
+  -a, --assignees   Comma-separated assignee emails, replacing any set
+  --state           open, closed, canceled
+  --subject, --body, --due, --milestone, --sprint, --parent
+  --blocks, --blocked-by, --related   Issue hashes, replacing any set
+
 gitsocial pm issue close <id>
 gitsocial pm issue reopen <id>
 gitsocial pm issue comment <id> <text>

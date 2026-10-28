@@ -49,15 +49,15 @@ Important: search returns items with `Hash` and `Extension` fields. Use these to
 GitSocial has no webhooks. To detect new items, poll with `--after` using the last check timestamp.
 
 ```
-1. Store last check time (e.g., 2025-03-30)
-2. Search: gitsocial search --type issue --after 2025-03-30 --json
+1. Store last check time (e.g., 2026-10-26)
+2. Search: gitsocial search --type issue --after 2026-10-26 --json
 3. Process new items
 4. Update last check time to now
 ```
 
 For agents running on a schedule, use yesterday's date:
 ```bash
-gitsocial search --type pr --after 2025-03-30 --json
+gitsocial search --type pr --after 2026-10-26 --json
 ```
 
 ### Batch operations
@@ -71,7 +71,7 @@ To act on multiple items from a search result:
    c. Act: gitsocial social comment <ref> "Friendly reminder: this PR is waiting for review"
 ```
 
-Never run write operations in a tight loop without rate consideration. Space actions with brief pauses.
+Writes are local commits; only `gitsocial push` publishes them. Review the batch before you push.
 
 ---
 
@@ -110,12 +110,12 @@ Watch for new issues and apply rules:
 1. gitsocial search --type issue --state open --after <last-check> --json
 2. For each new issue:
    a. Read content, determine category
-   b. If bug-related: gitsocial pm issue comment <ref> "Triaged as bug"
-   c. If assignee can be determined from rules: note for human review
+   b. If bug-related: gitsocial pm issue edit <ref> --labels "<existing>,bug"
+   c. If assignee can be determined from rules: gitsocial pm issue edit <ref> --assignees "<email>"
    d. Update last-check timestamp
 ```
 
-Note: GitSocial doesn't have a direct "add label" or "assign" command post-creation. Labels and assignees are set at creation time or via edits. For triage, commenting with classification is the primary action.
+Note: `pm issue edit --labels` and `--assignees` replace the whole set. Read the current values with `gitsocial show <hash> --json` and include them.
 
 ### Standup agent: daily summary
 Run daily to generate team standup data:
@@ -128,7 +128,7 @@ Run daily to generate team standup data:
 3. gitsocial search --type pr --state open --group-by author --limit 200 --json
    → "PRs in flight"
 4. Combine into a summary, optionally post:
-   gitsocial social post "Daily standup - March 31: ..."
+   gitsocial social post "Daily standup - October 27: ..."
 ```
 
 ### Release agent: automated release flow
